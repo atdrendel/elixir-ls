@@ -753,6 +753,16 @@ defmodule ElixirLS.LanguageServer.SourceFileTest do
       end
     end
 
+    test "unix volume" do
+      path = SourceFile.path_from_uri("file:///Volumes/PRIMARY/test/me")
+
+      if is_windows() do
+        assert path == "\\test\me"
+      else
+        assert path == "/test/me"
+      end
+    end
+
     test "wrong schema" do
       assert_raise ArgumentError, fn ->
         SourceFile.path_from_uri("untitled:Untitled-1")

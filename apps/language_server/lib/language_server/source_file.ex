@@ -76,14 +76,22 @@ defmodule ElixirLS.LanguageServer.SourceFile do
         true ->
           decoded_path = URI.decode(path)
 
-          if match?({:win32, _}, :os.type()) and
-               String.match?(decoded_path, ~r/^\/[a-zA-Z]:/) do
-            # Windows drive letter path
-            # drop leading `/` and downcase drive letter
-            <<_, letter, path_rest::binary>> = decoded_path
-            <<downcase(letter), path_rest::binary>>
-          else
-            decoded_path
+          cond do
+            match?({:win32, _}, :os.type()) and String.match?(decoded_path, ~r/^\/[a-zA-Z]:/) ->
+              # Windows drive letter path
+              # drop leading `/` and downcase drive letter
+              <<_, letter, path_rest::binary>> = decoded_path
+              <<downcase(letter), path_rest::binary>>
+
+            match?({:unix, _}, :os.type()) and String.starts_with?(decoded_path, "/Volumes/") ->
+              decoded_path
+              |> Path.split()
+              |> Enum.drop(3)
+              |> List.insert_at(0, "/")
+              |> Path.join()
+
+            true ->
+              decoded_path
           end
       end
 
